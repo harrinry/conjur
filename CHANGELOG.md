@@ -24,6 +24,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Requests with empty body and application/json Content-Type Header will now
   return 400 error instead of 500 error.
   [cyberark/conjur#1968](https://github.com/cyberark/conjur/issues/1968)
+- Changed how batch secret requests encode binary secrets into JSON.
+  Batch requests including a secret with binary data will now return properly
+  [cyberark/conjur#1962](https://github.com/cyberark/conjur/issues/1962)
 
 ## [1.11.1] - 2020-11-19
 ### Added

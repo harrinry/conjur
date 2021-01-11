@@ -57,3 +57,9 @@ Then(/^the binary result is preserved$/) do
   expect(@result.headers[:content_type]).to eq("application/octet-stream")
   expect(@result).to eq(@value)
 end
+
+Then(/^the binary data is preserved in JSON$/) do
+  puts @result
+  data = Base64.decode64(@result['cucumber:variable:secret3']['value'])
+  expect(data).to eq(@value)
+end
