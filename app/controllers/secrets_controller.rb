@@ -66,8 +66,19 @@ class SecretsController < RestController
       unless (secret = variable.last_secret)
         raise Exceptions::RecordNotFound, variable.resource_id
       end
-      
-      result[variable.resource_id] = secret.value
+
+      mime_type = variable.annotation('conjur/mime_type') || nil
+
+      if mime_type == 'application/octet-stream'
+        result[variable.resource_id] = {
+          :value => Base64.encode64(secret.value),
+          :encoding => 'base64'
+          :mime_type => 'application/octet-stream'
+        }
+      else
+        result[variable.resource_id] = secret.value
+      end
+
       audit_fetch variable
     end
 
