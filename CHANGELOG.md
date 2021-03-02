@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Security
+- Updated Rails to 5.2.4.5 to address CVE-2021-22880
+  [cyberark/conjur#2056](https://github.com/cyberark/conjur/issues/2056)
+
 ## [1.9.0] - 2020-08-31
 ### Added
 - Hosts can authenticate from Google Compute Engine (GCE) using a GCE instance
