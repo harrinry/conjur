@@ -83,11 +83,8 @@ class SecretsController < RestController
   end
 
   def audit_fetch resource, version: nil
-    # don't audit the fetch if the resource doesn't exist
-    return unless resource
-
     fetch_info = error_info.merge(
-      resource: resource,
+      resource_id: resource_id,
       version: version,
       user: current_user,
       client_ip: request.ip,
@@ -100,6 +97,7 @@ class SecretsController < RestController
   end
 
   def error_info
+    resource_visible = resource_visible?
     return { success: true } unless $ERROR_INFO
 
     # If resource is not visible, the error info will say it cannot be found.
@@ -107,7 +105,7 @@ class SecretsController < RestController
     # want more accurate 'Forbidden'.
     {
       success: false,
-      error_message: (resource_visible? ? $ERROR_INFO.message : 'Forbidden')
+      error_message: (resource_visible || resource_visible.nil? ? $ERROR_INFO.message : 'Forbidden')
     }
   end
 
