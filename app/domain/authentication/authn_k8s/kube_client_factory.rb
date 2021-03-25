@@ -16,6 +16,16 @@ module Authentication
       def self.client(api: 'api', version: 'v1', host_url: nil, options: nil)
         full_url = "#{host_url}/#{api}"
         validate_host_url! full_url
+        
+        # Autodetect and set :http_proxy_uri option if not set. Autodetect from conventional environment variables i.e. no_proxy,
+        # http(s)_proxy etc. 
+        # The #find_proxy method auto detects proxy environment variables based on the
+        # scheme of the URI object. It returns nil if the hostname is localhost, or
+        # 127.*.*.*, so we fix that by always setting a dummy hostname value of
+        # 'hostname' on the URI object.
+        options = Hash(options).tap do |h|
+          h[:http_proxy_uri] = URI.parse(host_url).tap{ |u| u.hostname = "hostname" }.find_proxy.to_s unless h.key? :http_proxy_uri
+        end
 
         Kubeclient::Client.new(full_url, version, options)
       end
