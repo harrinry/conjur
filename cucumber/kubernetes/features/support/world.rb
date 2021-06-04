@@ -47,6 +47,8 @@ module AuthnK8sWorld
     pod_metadata = @pod.metadata
     while count < retries
       puts("Waiting for client cert to be available (Attempt #{count + 1} of #{retries})")
+      # Add an initial wait to prevent race for creation
+      sleep(2)
 
       pod_metadata = @pod.metadata
       begin
