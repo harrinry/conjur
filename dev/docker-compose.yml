@@ -168,7 +168,7 @@ services:
     command:
       - |
         pip install jwcrypto
-        python /usr/src/jwks/server.py 8090
+        python /usr/src/jwks/jwks_server.py 8090
     volumes:
       - ../ci/jwt/jwks_server.py:/usr/src/jwks/jwks_server.py
 
