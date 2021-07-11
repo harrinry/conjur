@@ -101,3 +101,31 @@ Feature: JWT Authenticator - Security
       | RS384 |
       | RS512 |
 
+  Scenario Outline: ONYX-10148: Token Signed by EC, 200 OK
+    Given I initialize remote JWKS endpoint with file "ONYX-10148<alg>" and alg "<alg>"
+    And I successfully set authn-jwt "jwks-uri" variable value to "http://jwks_py:8090/ONYX-10148<alg>/<alg>" in service "raw"
+    And I am using file "ONYX-10148<alg>" and alg "<alg>" for remotely issue token:
+    """
+    {
+      "host":"myapp",
+      "project-id": "myproject"
+    }
+    """
+    And I save my place in the log file
+    When I authenticate via authn-jwt with the JWT token
+    Then the HTTP response status code is <code>
+    And The following appears in the log after my savepoint:
+    """
+    <log>
+    """
+    Examples:
+      | alg   | code | log                                                                                                                          |
+      | RS256 | 200  | cucumber:host:myapp successfully authenticated with authenticator authn-jwt service cucumber:webservice:conjur/authn-jwt/raw |
+      | RS384 | 200  | cucumber:host:myapp successfully authenticated with authenticator authn-jwt service cucumber:webservice:conjur/authn-jwt/raw |
+      | RS512 | 200  | cucumber:host:myapp successfully authenticated with authenticator authn-jwt service cucumber:webservice:conjur/authn-jwt/raw |
+      | ES256 | 200  | cucumber:host:myapp successfully authenticated with authenticator authn-jwt service cucumber:webservice:conjur/authn-jwt/raw |
+      | ES384 | 200  | cucumber:host:myapp successfully authenticated with authenticator authn-jwt service cucumber:webservice:conjur/authn-jwt/raw |
+      | ES512 | 200  | cucumber:host:myapp successfully authenticated with authenticator authn-jwt service cucumber:webservice:conjur/authn-jwt/raw |
+      | HS256 | 401  | CONJ00035E Failed to decode token (3rdPartyError ='#<JWT::IncorrectAlgorithm: Expected a different algorithm>')>             |
+      | HS384 | 401  | CONJ00035E Failed to decode token (3rdPartyError ='#<JWT::IncorrectAlgorithm: Expected a different algorithm>')>             |
+      | HS512 | 401  | CONJ00035E Failed to decode token (3rdPartyError ='#<JWT::IncorrectAlgorithm: Expected a different algorithm>')>             |
