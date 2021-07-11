@@ -146,6 +146,18 @@ services:
     entrypoint: sleep
     command: infinity
 
+  jwks_py:
+    image: python:3
+    entrypoint:
+      - bash
+      - -c
+    command:
+      - |
+        pip install jwcrypto
+        python /usr/src/jwks/server.py 8090
+    volumes:
+      - ./jwt/jwks_server.py:/usr/src/jwks/jwks_server.py
+
 volumes:
   authn-local:
   log-volume:
