@@ -99,30 +99,30 @@ pipeline {
           }
         }
 
-        stage('Scan Docker Image') {
-          parallel {
-            stage("Scan Docker Image for fixable issues") {
-              steps {
-                scanAndReport("conjur:${tagWithSHA()}", "HIGH", false)
-              }
-            }
-            stage("Scan Docker image for total issues") {
-              steps {
-                scanAndReport("conjur:${tagWithSHA()}", "NONE", true)
-              }
-            }
-            stage("Scan UBI-based Docker Image for fixable issues") {
-              steps {
-                scanAndReport("conjur-ubi:${tagWithSHA()}", "HIGH", false)
-              }
-            }
-            stage("Scan UBI-based Docker image for total issues") {
-              steps {
-                scanAndReport("conjur-ubi:${tagWithSHA()}", "NONE", true)
-              }
-            }
-          }
-        }
+        // stage('Scan Docker Image') {
+        //   parallel {
+        //     stage("Scan Docker Image for fixable issues") {
+        //       steps {
+        //         scanAndReport("conjur:${tagWithSHA()}", "HIGH", false)
+        //       }
+        //     }
+        //     stage("Scan Docker image for total issues") {
+        //       steps {
+        //         scanAndReport("conjur:${tagWithSHA()}", "NONE", true)
+        //       }
+        //     }
+        //     stage("Scan UBI-based Docker Image for fixable issues") {
+        //       steps {
+        //         scanAndReport("conjur-ubi:${tagWithSHA()}", "HIGH", false)
+        //       }
+        //     }
+        //     stage("Scan UBI-based Docker image for total issues") {
+        //       steps {
+        //         scanAndReport("conjur-ubi:${tagWithSHA()}", "NONE", true)
+        //       }
+        //     }
+        //   }
+        // }
 
         // TODO: Add comments explaining which env vars are set here.
         stage('Prepare For CodeClimate Coverage Report Submission') {
@@ -216,211 +216,211 @@ pipeline {
               }
             }
 
-            stage('Azure Authenticator') {
-              agent { label 'azure-linux' }
+            // stage('Azure Authenticator') {
+            //   agent { label 'azure-linux' }
 
-              environment {
-                // TODO: Move this into the authenticators_azure bash script.
-                AZURE_AUTHN_INSTANCE_IP = sh(
-                  script: 'curl "http://checkip.amazonaws.com"',
-                  returnStdout: true
-                ).trim()
-                // TODO: Move this into the authenticators_azure bash script.
-                SYSTEM_ASSIGNED_IDENTITY = sh(
-                  script: 'ci/test_suites/authenticators_azure/' +
-                    'get_system_assigned_identity.sh',
-                  returnStdout: true
-                ).trim()
-              }
+            //   environment {
+            //     // TODO: Move this into the authenticators_azure bash script.
+            //     AZURE_AUTHN_INSTANCE_IP = sh(
+            //       script: 'curl "http://checkip.amazonaws.com"',
+            //       returnStdout: true
+            //     ).trim()
+            //     // TODO: Move this into the authenticators_azure bash script.
+            //     SYSTEM_ASSIGNED_IDENTITY = sh(
+            //       script: 'ci/test_suites/authenticators_azure/' +
+            //         'get_system_assigned_identity.sh',
+            //       returnStdout: true
+            //     ).trim()
+            //   }
 
-              steps {
-                sh(
-                  'summon -f ci/test_suites/authenticators_azure/secrets.yml ' +
-                    'ci/test authenticators_azure'
-                )
-              }
+            //   steps {
+            //     sh(
+            //       'summon -f ci/test_suites/authenticators_azure/secrets.yml ' +
+            //         'ci/test authenticators_azure'
+            //     )
+            //   }
 
-              post {
-                always {
-                    stash(
-                      name: 'testResultAzure',
-                      allowEmpty: true,
-                      includes: '''
-                        cucumber/*azure*/*.*,
-                        container_logs/*azure*/*,
-                        cucumber_results*.json
-                      '''
-                    )
-                }
-              }
-            }
-            /**
-            * GCP Authenticator -- Token Stashing -- Stage 1 of 3
-            *
-            * In this stage, a GCE instance node is allocated, a script runs
-            * and retrieves all the tokens that will be used in authn-gcp
-            * tests.  The token are stashed, and later un-stashed and used in
-            * the stage that runs the GCP Authenticator tests.  This way we can
-            * have a light-weight GCE instance that has no dependency on
-            * conjurops or git identities and is not open for SSH.
-            */
-            stage('GCP Authenticator preparation - Allocate GCE Instance') {
-              steps {
-                echo '-- Allocating Google Compute Engine'
+            //   post {
+            //     always {
+            //         stash(
+            //           name: 'testResultAzure',
+            //           allowEmpty: true,
+            //           includes: '''
+            //             cucumber/*azure*/*.*,
+            //             container_logs/*azure*/*,
+            //             cucumber_results*.json
+            //           '''
+            //         )
+            //     }
+            //   }
+            // }
+            // /**
+            // * GCP Authenticator -- Token Stashing -- Stage 1 of 3
+            // *
+            // * In this stage, a GCE instance node is allocated, a script runs
+            // * and retrieves all the tokens that will be used in authn-gcp
+            // * tests.  The token are stashed, and later un-stashed and used in
+            // * the stage that runs the GCP Authenticator tests.  This way we can
+            // * have a light-weight GCE instance that has no dependency on
+            // * conjurops or git identities and is not open for SSH.
+            // */
+            // stage('GCP Authenticator preparation - Allocate GCE Instance') {
+            //   steps {
+            //     echo '-- Allocating Google Compute Engine'
 
-                script {
-                  dir('ci/test_suites/authenticators_gcp') {
-                    stash(
-                      name: 'get_gce_tokens_script',
-                      includes: '''
-                        get_gce_tokens_to_files.sh,
-                        get_tokens_to_files.sh,
-                        tokens_config.json
-                      '''
-                    )
-                  }
+            //     script {
+            //       dir('ci/test_suites/authenticators_gcp') {
+            //         stash(
+            //           name: 'get_gce_tokens_script',
+            //           includes: '''
+            //             get_gce_tokens_to_files.sh,
+            //             get_tokens_to_files.sh,
+            //             tokens_config.json
+            //           '''
+            //         )
+            //       }
 
-                  node('executor-v2-gcp-small') {
-                    echo '-- Google Compute Engine allocated'
-                    echo '-- Get compute engine instance project name from ' +
-                      'Google metadata server.'
-                    // TODO: Move this into get_gce_tokens_to_files.sh
-                    env.GCP_PROJECT = sh(
-                      script: 'curl -s -H "Metadata-Flavor: Google" ' +
-                        '"http://metadata.google.internal/computeMetadata/v1/' +
-                        'project/project-id"',
-                      returnStdout: true
-                    ).trim()
-                    unstash('get_gce_tokens_script')
-                    sh('./get_gce_tokens_to_files.sh')
-                    stash(
-                      name: 'authnGceTokens',
-                      includes: 'gce_token_*',
-                      allowEmpty:false
-                    )
-                  }
-                }
-              }
-              post {
-                failure {
-                  script {
-                    env.GCP_ENV_ERROR = "true"
-                  }
-                }
-                success {
-                  script {
-                    env.GCE_TOKENS_FETCHED = "true"
-                  }
-                  echo '-- Finished fetching GCE tokens.'
-                }
-              }
-            }
+            //       node('executor-v2-gcp-small') {
+            //         echo '-- Google Compute Engine allocated'
+            //         echo '-- Get compute engine instance project name from ' +
+            //           'Google metadata server.'
+            //         // TODO: Move this into get_gce_tokens_to_files.sh
+            //         env.GCP_PROJECT = sh(
+            //           script: 'curl -s -H "Metadata-Flavor: Google" ' +
+            //             '"http://metadata.google.internal/computeMetadata/v1/' +
+            //             'project/project-id"',
+            //           returnStdout: true
+            //         ).trim()
+            //         unstash('get_gce_tokens_script')
+            //         sh('./get_gce_tokens_to_files.sh')
+            //         stash(
+            //           name: 'authnGceTokens',
+            //           includes: 'gce_token_*',
+            //           allowEmpty:false
+            //         )
+            //       }
+            //     }
+            //   }
+            //   post {
+            //     failure {
+            //       script {
+            //         env.GCP_ENV_ERROR = "true"
+            //       }
+            //     }
+            //     success {
+            //       script {
+            //         env.GCE_TOKENS_FETCHED = "true"
+            //       }
+            //       echo '-- Finished fetching GCE tokens.'
+            //     }
+            //   }
+            // }
 
-            /**
-            * GCP Authenticator -- Allocate Function -- Stage 2 of 3
-            *
-            * In this stage, Google SDK container executes a script to deploy a
-            * function, the function accepts audience in query string and
-            * returns a token with that audience.  All the tokens required for
-            * testings are obtained and written to function directory, the post
-            * stage branch deletes the function.  This stage depends on stage:
-            * 'GCP Authenticator preparation - Allocate GCE Instance' to set
-            * the GCP project env var.
-            */
-            stage('GCP Authenticator preparation - Allocate Google Function') {
-              environment {
-                GCP_FETCH_TOKEN_FUNCTION = "fetch_token_${BUILD_NUMBER}"
-                IDENTITY_TOKEN_FILE = 'identity-token'
-                GCP_OWNER_SERVICE_KEY_FILE = "sa-key-file.json"
-              }
-              steps {
-                echo "Waiting for GCP project name (Set by stage: " +
-                  "'GCP Authenticator preparation - Allocate GCE Instance')"
-                timeout(time: 10, unit: 'MINUTES') {
-                  waitUntil {
-                    script {
-                      return (
-                        env.GCP_PROJECT != null || env.GCP_ENV_ERROR == "true"
-                      )
-                    }
-                  }
-                }
-                script {
-                  if (env.GCP_ENV_ERROR == "true") {
-                    error('GCP_ENV_ERROR cannot deploy function')
-                  }
+            // /**
+            // * GCP Authenticator -- Allocate Function -- Stage 2 of 3
+            // *
+            // * In this stage, Google SDK container executes a script to deploy a
+            // * function, the function accepts audience in query string and
+            // * returns a token with that audience.  All the tokens required for
+            // * testings are obtained and written to function directory, the post
+            // * stage branch deletes the function.  This stage depends on stage:
+            // * 'GCP Authenticator preparation - Allocate GCE Instance' to set
+            // * the GCP project env var.
+            // */
+            // stage('GCP Authenticator preparation - Allocate Google Function') {
+            //   environment {
+            //     GCP_FETCH_TOKEN_FUNCTION = "fetch_token_${BUILD_NUMBER}"
+            //     IDENTITY_TOKEN_FILE = 'identity-token'
+            //     GCP_OWNER_SERVICE_KEY_FILE = "sa-key-file.json"
+            //   }
+            //   steps {
+            //     echo "Waiting for GCP project name (Set by stage: " +
+            //       "'GCP Authenticator preparation - Allocate GCE Instance')"
+            //     timeout(time: 10, unit: 'MINUTES') {
+            //       waitUntil {
+            //         script {
+            //           return (
+            //             env.GCP_PROJECT != null || env.GCP_ENV_ERROR == "true"
+            //           )
+            //         }
+            //       }
+            //     }
+            //     script {
+            //       if (env.GCP_ENV_ERROR == "true") {
+            //         error('GCP_ENV_ERROR cannot deploy function')
+            //       }
 
-                  dir('ci/test_suites/authenticators_gcp') {
-                    sh('summon ./deploy_function_and_get_tokens.sh')
-                  }
-                }
-              }
-              post {
-                success {
-                  echo "-- Google Cloud test env is ready"
-                  script {
-                    env.GCP_FUNC_TOKENS_FETCHED = "true"
-                  }
-                }
-                failure {
-                  echo "-- GCP function deployment stage failed"
-                  script {
-                    env.GCP_ENV_ERROR = "true"
-                  }
-                }
-                always {
-                  script {
-                    dir('ci/test_suites/authenticators_gcp') {
-                      sh '''
-                        # Cleanup Google function
-                        summon ./run_gcloud.sh cleanup_function.sh
-                      '''
-                    }
-                  }
-                }
-              }
-            }
-            /**
-            * GCP Authenticator -- Run Tests -- Stage 3 of 3
-            *
-            * We have two preparation stages before running the GCP
-            * Authenticator tests stage.  This stage waits for GCP preparation
-            * stages to complete, un-stashes the tokens created in stage: 'GCP
-            * Authenticator preparation - Allocate GCE Instance' and runs the
-            * gcp-authn tests.
-            */
-            stage('GCP Authenticator - Run Tests') {
-              steps {
-                echo('Waiting for GCP Tokens provisioned by prep stages.')
+            //       dir('ci/test_suites/authenticators_gcp') {
+            //         sh('summon ./deploy_function_and_get_tokens.sh')
+            //       }
+            //     }
+            //   }
+            //   post {
+            //     success {
+            //       echo "-- Google Cloud test env is ready"
+            //       script {
+            //         env.GCP_FUNC_TOKENS_FETCHED = "true"
+            //       }
+            //     }
+            //     failure {
+            //       echo "-- GCP function deployment stage failed"
+            //       script {
+            //         env.GCP_ENV_ERROR = "true"
+            //       }
+            //     }
+            //     always {
+            //       script {
+            //         dir('ci/test_suites/authenticators_gcp') {
+            //           sh '''
+            //             # Cleanup Google function
+            //             summon ./run_gcloud.sh cleanup_function.sh
+            //           '''
+            //         }
+            //       }
+            //     }
+            //   }
+            // }
+            // /**
+            // * GCP Authenticator -- Run Tests -- Stage 3 of 3
+            // *
+            // * We have two preparation stages before running the GCP
+            // * Authenticator tests stage.  This stage waits for GCP preparation
+            // * stages to complete, un-stashes the tokens created in stage: 'GCP
+            // * Authenticator preparation - Allocate GCE Instance' and runs the
+            // * gcp-authn tests.
+            // */
+            // stage('GCP Authenticator - Run Tests') {
+            //   steps {
+            //     echo('Waiting for GCP Tokens provisioned by prep stages.')
 
-                timeout(time: 10, unit: 'MINUTES') {
-                  waitUntil {
-                    script {
-                      return (
-                        env.GCP_ENV_ERROR == "true" ||
-                        (
-                          env.GCP_FUNC_TOKENS_FETCHED == "true" &&
-                          env.GCE_TOKENS_FETCHED == "true"
-                        )
-                      )
-                    }
-                  }
-                }
-                script {
-                  if (env.GCP_ENV_ERROR == "true") {
-                    error(
-                      'GCP_ENV_ERROR: Check logs for errors in stages 1 and 2'
-                    )
-                  }
-                }
-                script {
-                  dir('ci/test_suites/authenticators_gcp/tokens') {
-                    unstash 'authnGceTokens'
-                  }
-                  sh 'ci/test authenticators_gcp'
-                }
-              }
-            }
+            //     timeout(time: 10, unit: 'MINUTES') {
+            //       waitUntil {
+            //         script {
+            //           return (
+            //             env.GCP_ENV_ERROR == "true" ||
+            //             (
+            //               env.GCP_FUNC_TOKENS_FETCHED == "true" &&
+            //               env.GCE_TOKENS_FETCHED == "true"
+            //             )
+            //           )
+            //         }
+            //       }
+            //     }
+            //     script {
+            //       if (env.GCP_ENV_ERROR == "true") {
+            //         error(
+            //           'GCP_ENV_ERROR: Check logs for errors in stages 1 and 2'
+            //         )
+            //       }
+            //     }
+            //     script {
+            //       dir('ci/test_suites/authenticators_gcp/tokens') {
+            //         unstash 'authnGceTokens'
+            //       }
+            //       sh 'ci/test authenticators_gcp'
+            //     }
+            //   }
+            // }
           }
         }
       }
@@ -439,6 +439,7 @@ pipeline {
 
         always {
           script {
+            input(message:'Paused for investigation')
             unstash 'testResultAzure'
 
             // Make files available for download.
@@ -608,42 +609,42 @@ def archiveFiles(filePattern) {
 def runConjurTests() {
   script {
     parallel([
-      "RSpec - ${env.STAGE_NAME}": {
-        sh 'ci/test rspec'
-      },
-      "Authenticators Config - ${env.STAGE_NAME}": {
-        sh 'ci/test authenticators_config'
-      },
-      "Authenticators Status - ${env.STAGE_NAME}": {
-        sh 'ci/test authenticators_status'
-      },
-      "LDAP Authenticator - ${env.STAGE_NAME}": {
-        sh 'ci/test authenticators_ldap'
-      },
-      "OIDC Authenticator - ${env.STAGE_NAME}": {
-        sh 'ci/test authenticators_oidc'
-      },
+      // "RSpec - ${env.STAGE_NAME}": {
+      //   sh 'ci/test rspec'
+      // },
+      // "Authenticators Config - ${env.STAGE_NAME}": {
+      //   sh 'ci/test authenticators_config'
+      // },
+      // "Authenticators Status - ${env.STAGE_NAME}": {
+      //   sh 'ci/test authenticators_status'
+      // },
+      // "LDAP Authenticator - ${env.STAGE_NAME}": {
+      //   sh 'ci/test authenticators_ldap'
+      // },
+      // "OIDC Authenticator - ${env.STAGE_NAME}": {
+      //   sh 'ci/test authenticators_oidc'
+      // },
       "JWT Authenticator - ${env.STAGE_NAME}": {
         sh 'ci/test authenticators_jwt'
-      },
-      "Policy - ${env.STAGE_NAME}": {
-        sh 'ci/test policy'
-      },
-      "API - ${env.STAGE_NAME}": {
-        sh 'ci/test api'
-      },
-      "Rotators - ${env.STAGE_NAME}": {
-        sh 'ci/test rotators'
-      },
-      "Kubernetes 1.7 in GKE - ${env.STAGE_NAME}": {
-        sh 'cd ci/authn-k8s && summon ./test.sh gke'
-      },
-      "Audit - ${env.STAGE_NAME}": {
-        sh 'ci/test rspec_audit'
-      },
-      "Policy Parser - ${env.STAGE_NAME}": {
-        sh 'cd gems/policy-parser && ./test.sh'
       }
+      // "Policy - ${env.STAGE_NAME}": {
+      //   sh 'ci/test policy'
+      // },
+      // "API - ${env.STAGE_NAME}": {
+      //   sh 'ci/test api'
+      // },
+      // "Rotators - ${env.STAGE_NAME}": {
+      //   sh 'ci/test rotators'
+      // },
+      // "Kubernetes 1.7 in GKE - ${env.STAGE_NAME}": {
+      //   sh 'cd ci/authn-k8s && summon ./test.sh gke'
+      // },
+      // "Audit - ${env.STAGE_NAME}": {
+      //   sh 'ci/test rspec_audit'
+      // },
+      // "Policy Parser - ${env.STAGE_NAME}": {
+      //   sh 'cd gems/policy-parser && ./test.sh'
+      // }
     ])
   }
 }
