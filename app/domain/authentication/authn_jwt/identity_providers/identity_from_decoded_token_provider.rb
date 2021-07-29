@@ -43,7 +43,8 @@ module Authentication
           return @identity_name_from_token if @identity_name_from_token
 
           @logger.debug(LogMessages::Authentication::AuthnJwt::CheckingIdentityFieldExists.new(token_id_field_secret))
-          @identity_name_from_token = decoded_token[token_id_field_secret]
+          token_path = token_id_field_secret.split('/')
+          @identity_name_from_token = decoded_token.dig(*token_path)
           if @identity_name_from_token.blank?
             raise Errors::Authentication::AuthnJwt::NoSuchFieldInToken, token_id_field_secret
           end

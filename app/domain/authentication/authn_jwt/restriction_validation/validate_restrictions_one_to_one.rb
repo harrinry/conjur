@@ -23,12 +23,13 @@ module Authentication
             raise Errors::Authentication::ResourceRestrictions::EmptyAnnotationGiven, annotation_name
           end
 
-          unless @decoded_token.key?(claim_name)
+          token_path = claim_name.split('/')
+          token_value = @decoded_token.dig(*token_path)
+          if token_value.nil?
             raise Errors::Authentication::AuthnJwt::JwtTokenClaimIsMissing,
                   claim_name_for_error(annotation_name, claim_name)
           end
-
-          @decoded_token.fetch(claim_name) == restriction_value
+          token_value == restriction_value
         end
 
         private
