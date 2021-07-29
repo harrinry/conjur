@@ -252,6 +252,18 @@ RSpec.describe('Authentication::AuthnJwt::InputValidation::ValidateClaimName') d
         expect { subject }.not_to raise_error
       end
     end
+
+    context "When claim name contains slashes" do
+      subject do
+        ::Authentication::AuthnJwt::InputValidation::ValidateClaimName.new().call(
+          claim_name: "$/2/w/9"
+        )
+      end
+
+      it 'does not raise error' do
+        expect { subject }.not_to raise_error
+      end
+    end
   end
 
   context "Claim name exists in deny list" do
