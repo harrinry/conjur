@@ -154,6 +154,18 @@ RSpec.describe('Authentication::AuthnJwt::InputValidation::ValidateClaimName') d
         expect { subject }.to raise_error(Errors::Authentication::AuthnJwt::FailedToValidateClaimForbiddenClaimName)
       end
     end
+
+    context "When nested claim contains forbidden character *" do
+      subject do
+        ::Authentication::AuthnJwt::InputValidation::ValidateClaimName.new().call(
+          claim_name: "this/is/a/nested*claim"
+        )
+      end
+
+      it "raises an error" do
+        expect { subject }.to raise_error(Errors::Authentication::AuthnJwt::FailedToValidateClaimForbiddenClaimName)
+      end
+    end
   end
 
   context "Valid claim name value" do
@@ -256,7 +268,7 @@ RSpec.describe('Authentication::AuthnJwt::InputValidation::ValidateClaimName') d
     context "When claim name contains slashes" do
       subject do
         ::Authentication::AuthnJwt::InputValidation::ValidateClaimName.new().call(
-          claim_name: "$/2/w/9"
+          claim_name: "f/W/_/$"
         )
       end
 
