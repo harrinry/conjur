@@ -10,9 +10,13 @@ module Authentication
 
       attr_reader :xms_mirid, :oid
 
-      def initialize(decoded_token_hash:, logger:)
+      def initialize(
+        decoded_token_hash:,
+        logger:,
+        extract_nested_value: Authentication::Util::ExtractNestedValue.new)
         @decoded_token_hash = decoded_token_hash
         @logger = logger
+        @extract_nested_value = extract_nested_value
 
         @xms_mirid = token_claim_value(XMS_MIRID_TOKEN_CLAIM_NAME)
         @oid = token_claim_value(OID_TOKEN_CLAIM_NAME)
@@ -21,8 +25,10 @@ module Authentication
       private
 
       def token_claim_value(token_claim)
-        token_claim_path = token_claim.split('/')
-        token_claim_value = @decoded_token_hash.dig(*token_claim_path)
+        token_claim_value = @extract_nested_value.(
+          hash_map: @decoded_token_hash,
+          path: token_claim
+        )
 
         unless token_claim_value
           raise Errors::Authentication::Jwt::TokenClaimNotFoundOrEmpty, token_claim

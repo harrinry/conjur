@@ -10,6 +10,7 @@ module Authentication
           fetch_authenticator_secrets: Authentication::Util::FetchAuthenticatorSecrets.new,
           check_authenticator_secret_exists: Authentication::Util::CheckAuthenticatorSecretExists.new,
           add_prefix_to_identity: Authentication::AuthnJwt::IdentityProviders::AddPrefixToIdentity.new,
+          extract_nested_value: Authentication::Util::ExtractNestedValue.new,
           logger: Rails.logger
         },
         inputs: %i[jwt_authenticator_input]
@@ -43,8 +44,7 @@ module Authentication
           return @identity_name_from_token if @identity_name_from_token
 
           @logger.debug(LogMessages::Authentication::AuthnJwt::CheckingIdentityFieldExists.new(token_id_field_secret))
-          token_path = token_id_field_secret.split('/')
-          @identity_name_from_token = decoded_token.dig(*token_path)
+          @identity_name_from_token = identity_name_from_token
           if @identity_name_from_token.blank?
             raise Errors::Authentication::AuthnJwt::NoSuchFieldInToken, token_id_field_secret
           end
@@ -58,10 +58,15 @@ module Authentication
           @identity_name_from_token
         end
 
-        def token_id_field_secret
-          return @token_id_field_secret if @token_id_field_secret
+        def identity_name_from_token
+          @extract_nested_value.(
+            hash_map: decoded_token,
+            path: token_id_field_secret
+          )
+        end
 
-          @token_id_field_secret = @fetch_authenticator_secrets.call(
+        def token_id_field_secret
+          @token_id_field_secret ||= @fetch_authenticator_secrets.call(
             conjur_account: account,
             authenticator_name: authenticator_name,
             service_id: service_id,

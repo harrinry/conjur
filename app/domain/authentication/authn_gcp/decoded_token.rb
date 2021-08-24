@@ -13,9 +13,13 @@ module Authentication
 
       attr_reader :project_id, :instance_name, :service_account_id, :service_account_email, :audience
 
-      def initialize(decoded_token_hash:, logger:)
+      def initialize(
+        decoded_token_hash:,
+        logger:,
+        extract_nested_value: Authentication::Util::ExtractNestedValue.new)
         @decoded_token_hash = decoded_token_hash
         @logger = logger
+        @extract_nested_value = extract_nested_value
 
         initialize_required_claims
         initialize_optional_claims
@@ -60,8 +64,10 @@ module Authentication
       end
 
       def token_claim_value(token_claim)
-        token_claim_path = token_claim.split('/')
-        @decoded_token_hash.dig(*token_claim_path)
+        @extract_nested_value.(
+          hash_map: @decoded_token_hash,
+          path: token_claim
+        )
       end
 
       def log_claim_extracted_from_token(token_claim, token_claim_value)
