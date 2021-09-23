@@ -428,7 +428,7 @@ pipeline {
         }
       }
 
-      post {
+//       post {
 //         success {
 //           script {
 //             if (env.BRANCH_NAME == 'master') {
@@ -499,7 +499,7 @@ pipeline {
 //             )
 //           }
 //         }
-      }
+//       }
     } // end stage: build and test conjur
 
 //     stage('Submit Coverage Report') {
