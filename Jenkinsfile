@@ -48,11 +48,11 @@ pipeline {
       }
     }
 
-    stage('Validate Changelog') {
-      steps {
-        sh 'ci/parse-changelog'
-      }
-    }
+//     stage('Validate Changelog') {
+//       steps {
+//         sh 'ci/parse-changelog'
+//       }
+//     }
 
     stage('Build and test Conjur') {
       when {
@@ -429,146 +429,146 @@ pipeline {
       }
 
       post {
-        success {
-          script {
-            if (env.BRANCH_NAME == 'master') {
-              build(
-                job:'../cyberark--secrets-provider-for-k8s/main',
-                wait: false
-              )
-            }
-          }
-        }
+//         success {
+//           script {
+//             if (env.BRANCH_NAME == 'master') {
+//               build(
+//                 job:'../cyberark--secrets-provider-for-k8s/main',
+//                 wait: false
+//               )
+//             }
+//           }
+//         }
 
-        always {
-          script {
-            // unstash 'testResultAzure'
-
-            // Make files available for download.
-            archiveFiles('container_logs/*/*')
-            archiveFiles('coverage/.resultset*.json')
-            archiveFiles(
-              'ci/authn-k8s/output/simplecov-resultset-authnk8s-gke.json'
-            )
-            archiveFiles('cucumber/*/*.*')
-
-            publishHTML([
-              reportName: 'Integration reports',
-              reportDir: 'cucumber',
-              reportFiles: '''
-                api/cucumber_results.html,
-                authenticators_config/cucumber_results.html,
-                authenticators_azure/cucumber_results.html,
-                authenticators_ldap/cucumber_results.html,
-                authenticators_oidc/cucumber_results.html,
-                authenticators_jwt/cucumber_results.html,
-                authenticators_gcp/cucumber_results.html,
-                authenticators_status/cucumber_results.html,
-                policy/cucumber_results.html,
-                rotators/cucumber_results.html
-              ''',
-              reportTitles: '',
-              allowMissing: false,
-              alwaysLinkToLastBuild: true,
-              keepAll: true
-            ])
-
-            publishHTML(
-              reportName: 'Coverage Report',
-              reportDir: 'coverage',
-              reportFiles: 'index.html',
-              reportTitles: '',
-              allowMissing: false,
-              alwaysLinkToLastBuild: true,
-              keepAll: true
-            )
-            junit('''
-              spec/reports/*.xml,
-              spec/reports-audit/*.xml,
-              cucumber/*/features/reports/**/*.xml,
-              ee-test/spec/reports/*.xml,
-              ee-test/spec/reports-audit/*.xml,
-              ee-test/cucumber/*/features/reports/**/*.xml
-            '''
-            )
-
-            // Make cucumber reports available as html report in Jenkins UI.
-            cucumber(
-              fileIncludePattern: '**/cucumber_results.json',
-              sortingMethod: 'ALPHABETICAL'
-            )
-          }
-        }
+//         always {
+//           script {
+//             // unstash 'testResultAzure'
+//
+//             // Make files available for download.
+//             archiveFiles('container_logs/*/*')
+//             archiveFiles('coverage/.resultset*.json')
+//             archiveFiles(
+//               'ci/authn-k8s/output/simplecov-resultset-authnk8s-gke.json'
+//             )
+//             archiveFiles('cucumber/*/*.*')
+//
+//             publishHTML([
+//               reportName: 'Integration reports',
+//               reportDir: 'cucumber',
+//               reportFiles: '''
+//                 api/cucumber_results.html,
+//                 authenticators_config/cucumber_results.html,
+//                 authenticators_azure/cucumber_results.html,
+//                 authenticators_ldap/cucumber_results.html,
+//                 authenticators_oidc/cucumber_results.html,
+//                 authenticators_jwt/cucumber_results.html,
+//                 authenticators_gcp/cucumber_results.html,
+//                 authenticators_status/cucumber_results.html,
+//                 policy/cucumber_results.html,
+//                 rotators/cucumber_results.html
+//               ''',
+//               reportTitles: '',
+//               allowMissing: false,
+//               alwaysLinkToLastBuild: true,
+//               keepAll: true
+//             ])
+//
+//             publishHTML(
+//               reportName: 'Coverage Report',
+//               reportDir: 'coverage',
+//               reportFiles: 'index.html',
+//               reportTitles: '',
+//               allowMissing: false,
+//               alwaysLinkToLastBuild: true,
+//               keepAll: true
+//             )
+//             junit('''
+//               spec/reports/*.xml,
+//               spec/reports-audit/*.xml,
+//               cucumber/*/features/reports/**/*.xml,
+//               ee-test/spec/reports/*.xml,
+//               ee-test/spec/reports-audit/*.xml,
+//               ee-test/cucumber/*/features/reports/**/*.xml
+//             '''
+//             )
+//
+//             // Make cucumber reports available as html report in Jenkins UI.
+//             cucumber(
+//               fileIncludePattern: '**/cucumber_results.json',
+//               sortingMethod: 'ALPHABETICAL'
+//             )
+//           }
+//         }
       }
     } // end stage: build and test conjur
 
-    stage('Submit Coverage Report') {
-      when {
-        expression {
-          env.CODE_CLIMATE_PREPARED == "true"
-        }
-      }
-      steps{
-        sh 'ci/submit-coverage'
-      }
-    }
+//     stage('Submit Coverage Report') {
+//       when {
+//         expression {
+//           env.CODE_CLIMATE_PREPARED == "true"
+//         }
+//       }
+//       steps{
+//         sh 'ci/submit-coverage'
+//       }
+//     }
 
-    stage('Publish images') {
-      parallel {
-        stage('On a new tag') {
-          when {
-            // Only run this stage when it's a tag build matching vA.B.C
-            tag(
-              pattern: "^v[0-9]+\\.[0-9]+\\.[0-9]+\$",
-              comparator: "REGEXP"
-            )
-          }
+//     stage('Publish images') {
+//       parallel {
+//         stage('On a new tag') {
+//           when {
+//             // Only run this stage when it's a tag build matching vA.B.C
+//             tag(
+//               pattern: "^v[0-9]+\\.[0-9]+\\.[0-9]+\$",
+//               comparator: "REGEXP"
+//             )
+//           }
+//
+//           steps {
+//             sh 'summon -f ./secrets.yml ./push-image.sh'
+//             // Trigger Conjurops build to push new releases of conjur to ConjurOps Staging
+//             build(
+//               job:'../conjurinc--conjurops/master',
+//               parameters:[
+//                 string(name: 'conjur_oss_source_image', value: "cyberark/conjur:${TAG_NAME}")
+//               ],
+//               wait: false
+//             )
+//           }
+//         }
+//
+//         stage('On a master build') {
+//           when { environment name: 'JOB_NAME', value: 'cyberark--conjur/master' }
+//           steps {
+//             script {
+//               def tasks = [:]
+//               tasks["Publish edge to local registry"] = {
+//                 sh './push-image.sh --edge --registry-prefix=registry.tld'
+//               }
+//               tasks["Publish edge to DockerHub"] = {
+//                 sh './push-image.sh --edge'
+//               }
+//               parallel tasks
+//             }
+//           }
+//         }
+//       }
+//     }
 
-          steps {
-            sh 'summon -f ./secrets.yml ./push-image.sh'
-            // Trigger Conjurops build to push new releases of conjur to ConjurOps Staging
-            build(
-              job:'../conjurinc--conjurops/master',
-              parameters:[
-                string(name: 'conjur_oss_source_image', value: "cyberark/conjur:${TAG_NAME}")
-              ],
-              wait: false
-            )
-          }
-        }
+//     stage('Build Debian and RPM packages') {
+//       steps {
+//         sh 'echo "CONJUR_VERSION=5" >> debify.env'
+//         sh './package.sh'
+//         archiveArtifacts artifacts: '*.deb', fingerprint: true
+//         archiveArtifacts artifacts: '*.rpm', fingerprint: true
+//       }
+//     }
 
-        stage('On a master build') {
-          when { environment name: 'JOB_NAME', value: 'cyberark--conjur/master' }
-          steps {
-            script {
-              def tasks = [:]
-              tasks["Publish edge to local registry"] = {
-                sh './push-image.sh --edge --registry-prefix=registry.tld'
-              }
-              tasks["Publish edge to DockerHub"] = {
-                sh './push-image.sh --edge'
-              }
-              parallel tasks
-            }
-          }
-        }
-      }
-    }
-
-    stage('Build Debian and RPM packages') {
-      steps {
-        sh 'echo "CONJUR_VERSION=5" >> debify.env'
-        sh './package.sh'
-        archiveArtifacts artifacts: '*.deb', fingerprint: true
-        archiveArtifacts artifacts: '*.rpm', fingerprint: true
-      }
-    }
-
-    stage('Publish Debian and RPM packages'){
-      steps {
-        sh './publish.sh'
-      }
-    }
+//     stage('Publish Debian and RPM packages'){
+//       steps {
+//         sh './publish.sh'
+//       }
+//     }
   }
 
   post {
@@ -642,7 +642,7 @@ def runConjurTests() {
       */
       "Kubernetes 1.7 in GKE - ${env.STAGE_NAME}": {
         sh 'cd ci/authn-k8s && summon ./test.sh gke'
-      },
+      } //,
       /*
       "Audit - ${env.STAGE_NAME}": {
         sh 'ci/test rspec_audit'
