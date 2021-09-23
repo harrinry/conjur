@@ -99,6 +99,7 @@ pipeline {
           }
         }
 
+        /*
         stage('Scan Docker Image') {
           parallel {
             stage("Scan Docker Image for fixable issues") {
@@ -136,6 +137,7 @@ pipeline {
             }
           }
         }
+        */
 
         // Run outside parallel block to reduce main Jenkins executor load.
         stage('Nightly Only') {
@@ -216,6 +218,7 @@ pipeline {
               }
             }
 
+/*
             stage('Azure Authenticator') {
               agent { label 'azure-linux' }
 
@@ -254,6 +257,7 @@ pipeline {
                 }
               }
             }
+
             /**
             * GCP Authenticator -- Token Stashing -- Stage 1 of 3
             *
@@ -421,10 +425,11 @@ pipeline {
                 }
               }
             }
+            */
           }
         }
       }
-      
+
       post {
         success {
           script {
@@ -439,7 +444,7 @@ pipeline {
 
         always {
           script {
-            unstash 'testResultAzure'
+            // unstash 'testResultAzure'
 
             // Make files available for download.
             archiveFiles('container_logs/*/*')
@@ -608,6 +613,7 @@ def archiveFiles(filePattern) {
 def runConjurTests() {
   script {
     parallel([
+      /*
       "RSpec - ${env.STAGE_NAME}": {
         sh 'ci/test rspec'
       },
@@ -635,15 +641,18 @@ def runConjurTests() {
       "Rotators - ${env.STAGE_NAME}": {
         sh 'ci/test rotators'
       },
+      */
       "Kubernetes 1.7 in GKE - ${env.STAGE_NAME}": {
         sh 'cd ci/authn-k8s && summon ./test.sh gke'
       },
+      /*
       "Audit - ${env.STAGE_NAME}": {
         sh 'ci/test rspec_audit'
       },
       "Policy Parser - ${env.STAGE_NAME}": {
         sh 'cd gems/policy-parser && ./test.sh'
       }
+      */
     ])
   }
 }
